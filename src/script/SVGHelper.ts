@@ -24,6 +24,31 @@ module Gauge {
             ].join(" ");
 
             return d;
+        },
+        GetTextMetric: function (text: string = 'W')
+        {
+            var textEmpty = false;
+            if (text === '')
+            {
+                text = 'W';
+                textEmpty = true;
+            }
+            var textElement = document.createElement('span');
+            textElement.style.display = 'inline-block';
+            textElement.style.lineHeight = '1';
+            textElement.innerHTML = text;
+
+            var body = document.getElementsByTagName('body')[0];
+            body.appendChild(textElement);
+
+            var result = new Size(textElement.offsetWidth, textElement.offsetHeight);
+
+            if (textEmpty)
+                result.Width = Math.round(result.Width * 0.8);
+
+            body.removeChild(textElement);
+
+            return result;
         }
     }
 

@@ -5,6 +5,6 @@ module.exports = {
     },
     options: {
         sourceMap: true,
-        declaration: true
+        declaration: false
     }
 };

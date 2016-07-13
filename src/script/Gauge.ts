@@ -1,38 +1,51 @@
-module Gauge
-{
-    declare var $: any;
+module Gauge {
+
+    export class Gauge {
+
+        private targetElement:HTMLElement = null;
+        private gaugeElement:HTMLElement = null;
+        private canvasElement:HTMLElement = null;
 
 
-    export class Gauge
-    {
-
-        private targetElement: HTMLElement = null;
-        private gaugeElement: HTMLElement = null;
-        private canvasElement: HTMLElement = null;
-        private pointerElement: HTMLElement = null;
-
-
-        constructor()
-        {
-            //super(['OnShown', 'OnClosed']);
+        constructor() {
             this.sectors = [
-                {
-                    color: 'green'
-                },
-                {
-                    color: 'yellow'
-                },
-                {
-                    color: 'red'
-                }
-            ]
+                new Sector(70),
+                new Sector(20),
+                new Sector(10)
+            ];
+
+            this.Value = 65;
         }
 
 
-        private isReadOnly = false;
-        public get IsReadOnly()
+        private labelsOutside = true;
+        public get LabelsOutside(): boolean
         {
-            return this.isReadOnly;
+            return this.labelsOutside;
+        }
+        public set LabelsOutside(v: boolean)
+        {
+            if (this.labelsOutside !== v)
+            {
+                this.labelsOutside = v;
+                this.redrawCanvas();
+            }
+        }
+
+        private get scaleRadius():number {
+            // Here we negotiate the 10% margin
+            return (Math.min(this.canvasSize.Width, this.canvasSize.Height) * 0.9 / 2);
+        }
+
+        private canvasSize:Size = new Size(450, 450);
+        public get CanvasSize():Size {
+            return this.canvasSize;
+        }
+        public set CanvasSize(v:Size) {
+            if (v.Width !== this.canvasSize.Width && v.Height !== this.canvasSize.Height) {
+                this.canvasSize = v;
+                this.redrawCanvas();
+            }
         }
 
         /**
@@ -40,113 +53,95 @@ module Gauge
          *
          * @type {number}
          */
-        private value: number = 0;
-        public get Value(): number
-        {
+        private value:number = 0;
+
+        public get Value():number {
             return this.value;
         }
-        public set Value(v: number)
-        {
-            if (v !== this.value && v >= 0 && v <= 100)
-            {
+
+        public set Value(v:number) {
+            if (v !== this.value && v >= 0 && v <= 100) {
                 this.value = v;
-                this.redrawPointer();
+                this.redrawCanvas();
             }
         }
 
-        private labels: Array = [1, 2, 3, 4, 5, 6];
-        public get Labels(): Array
-        {
+        private labels:string[] = ['0', '1', '2', '3', '4', '5', '6'];
+
+        public get Labels():string[] {
             return this.labels;
         }
-        public set Labels(v: Array)
-        {
+        public set Labels(v:string[]) {
             this.labels = v;
             this.redrawCanvas();
         }
 
-        private sectors: Array = [];
-        public get Sectors(): Array
-        {
+        private sectors:Sector[] = null;
+        public get Sectors():Sector[] {
             return this.sectors;
         }
-        public set Sectors(v: Array)
-        {
+        public set Sectors(v:Sector[]) {
+            var total = 0;
+            for (var i in v) {
+                total += v[i].Percentage;
+                if (total > 100)
+                    throw new Error('The entire sectors width must not be more than 100%.');
+            }
             this.sectors = v;
             this.redrawCanvas();
         }
 
-        private drawingContext: DrawingContext = null;
-        public get DrawingContext(): DrawingContext
-        {
-            return this.drawingContext;
-        }
-
-        private availableDegrees: number = 260;
-        public get AvailableDegrees(): number
-        {
+        private availableDegrees:number = 260;
+        public get AvailableDegrees():number {
             return this.availableDegrees;
         }
-        public set AvailableDegrees(v: number)
-        {
-            if (this.availableDegrees !== v)
-            {
+        public set AvailableDegrees(v:number) {
+            if (this.availableDegrees !== v) {
                 this.availableDegrees = v;
                 this.redrawCanvas();
             }
         }
 
-        private _svgCanvas: Element = null;
-        private get svgCanvas(): Element
-        {
-            if (this._svgCanvas === null)
-            {
+        private _svgCanvas:Element = null;
+        private get svgCanvas():Element {
+            if (this._svgCanvas === null) {
                 this._svgCanvas = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                this._svgCanvas.setAttribute('width', '325');
-                this._svgCanvas.setAttribute('height', '325');
+                this._svgCanvas.setAttribute('width', this.canvasSize.Width + '');
+                this._svgCanvas.setAttribute('height', this.canvasSize.Height + '');
             }
             return this._svgCanvas;
         }
 
+        private _pointerElement:Element = null;
+        private get pointerElement():Element {
+            if (this._pointerElement === null) {
+                this._pointerElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                this._pointerElement.setAttribute('class', CSSClasses.Pointer);
+            }
+            return this._pointerElement;
+        }
 
-        public Init(options)
-        {
-            options = options || {};
-            if (typeof (options.isReadOnly) !== 'undefined')
-                this.isReadOnly = options.isReadOnly === true;
 
-            this.targetElement = options.targetElement;
-            if (this.targetElement === null && !(this.targetElement instanceof HTMLElement))
+        public Init(targetElement:HTMLElement) {
+            this.targetElement = targetElement;
+            if (this.targetElement === null || !(this.targetElement instanceof HTMLElement))
                 throw new Error("Target HTML element not specified.");
 
             this.gaugeElement = document.createElement('div');
             this.gaugeElement.classList.add(CSSClasses.Gauge);
-            if (this.isReadOnly)
-                this.gaugeElement.classList.add(CSSClasses.ReadOnly);
 
             this.canvasElement = document.createElement('div');
             this.canvasElement.className = CSSClasses.Canvas;
 
-            this.pointerElement = document.createElement('div');
-            this.pointerElement.className = CSSClasses.Pointer;
-
             this.gaugeElement.appendChild(this.canvasElement);
-            this.gaugeElement.appendChild(this.pointerElement);
             this.targetElement.appendChild(this.gaugeElement);
 
-            if (this.DrawingContext === null)
-            {
-                this.drawingContext = new DrawingContext(this.canvasElement);
-            }
-
             this.redrawCanvas();
-            this.redrawPointer();
         }
 
 
-        private redrawCanvas(force = false)
-        {
-            if (!force && this.DrawingContext === null)
+        private redrawCanvas(force = false) {
+            if (!force && this.canvasElement === null)
                 return;
 
             // Clear canvas
@@ -154,64 +149,95 @@ module Gauge
                 this.canvasElement.removeChild(this.canvasElement.firstChild);
             }
 
-            var sectorDuration = this.availableDegrees / this.sectors.length,
-                startPoint = 360 - this.availableDegrees / 2,
-                fakeScale = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-
-            // Fake scale is done in sake of labels binding
-            fakeScale.setAttribute('d', SVGHelper.DescribeArc(150, 150, 110, 230, 130));
-            fakeScale.setAttribute('id', 'fake_scale');
-            fakeScale['style']['fill'] = 'transparent';
-            fakeScale['style']['stroke'] = 'black';
-            this.svgCanvas.appendChild(fakeScale);
+            var startPoint = 360 - this.availableDegrees / 2,
+                scaleCenterX = this.canvasSize.Width / 2,
+                scaleCenterY = this.canvasSize.Height / 2;
 
 
-            for (var i in this.sectors)
-            {
+            // Draw sectors
+            var offsetPercent = 0;
+            for (var i in this.sectors) {
                 var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                var start = i * sectorDuration + startPoint;
+                p.setAttribute('class', CSSClasses.Sector);
+
+                var start = startPoint + this.AvailableDegrees * offsetPercent / 100;
                 if (start > 360)
                     start -= 360;
-                var end = start + sectorDuration;
+                var end = start + this.AvailableDegrees * this.sectors[i].Percentage / 100;
                 if (end > 360)
                     end -= 360;
 
                 // Draw a sector
-                p.setAttribute('d', SVGHelper.DescribeArc(150, 150, 100, start, end));
-                p['style']['stroke'] = this.sectors[i].color;
-                p['style']['fill'] = 'transparent';
-                p['style']['stroke-width'] = '3';
+                p.setAttribute('d', SVGHelper.DescribeArc(
+                    scaleCenterX,
+                    scaleCenterY,
+                    this.scaleRadius,
+                    start,
+                    end
+                ));
+                if (this.sectors[i].Color)
+                    p['style']['stroke'] = this.sectors[i].Color;
 
                 this.svgCanvas.appendChild(p);
+
+                offsetPercent += this.sectors[i].Percentage;
             }
 
 
-            for (var i in this.labels)
-            {
-                var l = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                //l.setAttribute('x', '20');
-                //l.setAttribute('y', '20');
-                //l.textContent = this.labels[i];
+            // Draw labels
+            for (var i in this.labels) {
+                var angle = 360 - this.availableDegrees / 2 + (this.availableDegrees / (this.labels.length - 1)) * i;
+                if (angle > 360)
+                    angle -= 360;
 
-                var t = document.createElementNS('http://www.w3.org/2000/svg', 'textPath');
-                t.setAttribute('xlink:href', '#fake_scale');
+                var labelOffset = this.labelsOutside ? 15 : -15;
 
-                l.appendChild(t);
+                var labelPoint = SVGHelper.PolarToCartesian(
+                    scaleCenterX,
+                    scaleCenterY,
+                    this.scaleRadius + labelOffset,
+                    angle
+                );
 
-                this.svgCanvas.appendChild(l);
+                var textSize = SVGHelper.GetTextMetric(this.labels[i]);
+
+                var t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('class', CSSClasses.Label);
+                t.setAttribute('x', (labelPoint.x - textSize.Width / 2) + '');
+                t.setAttribute('y', (labelPoint.y + textSize.Height / 2) + '');
+                t.textContent = this.labels[i];
+
+                this.svgCanvas.appendChild(t);
             }
 
             this.canvasElement.appendChild(this.svgCanvas);
+
+            this.redrawPointer();
         }
 
-        private redrawPointer(force = false)
-        {
-            if (!force && this.DrawingContext === null)
-                return;
+        private redrawPointer() {
+            var scaleCenterX = this.canvasSize.Width / 2,
+                scaleCenterY = this.canvasSize.Height / 2;
 
-            var p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            p.setAttribute('d', 'M230 80 A 45 45, 0, 1, 0, 275 125 L 275 80 Z');
-            p['style']['fill'] = 'blue';
+            var p = this.pointerElement;
+
+            var valueDiff = this.availableDegrees * this.value / 100;
+            var valueAngle = 360 - this.availableDegrees / 2 + valueDiff;
+            if (valueAngle > 360)
+                valueAngle -= 360;
+
+            var tipPoint = SVGHelper.PolarToCartesian(scaleCenterX, scaleCenterY, this.scaleRadius + 5, valueAngle);
+
+            // Start point places farther on the right than the end point
+            var startAngle = valueAngle + 30;
+            if (startAngle > 360)
+                startAngle -= 360;
+            startAngle -= 360;
+
+            p.setAttribute('d', SVGHelper.DescribeArc(
+                    scaleCenterX, scaleCenterY, 10, startAngle, valueAngle - 30) +
+                ' L ' + tipPoint.x + ' ' + tipPoint.y + ' Z'
+            );
 
             this.svgCanvas.appendChild(p);
         }

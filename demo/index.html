@@ -2,6 +2,8 @@
 <html>
 <head lang="en">
     <meta charset="UTF-8">
+    <link href="../dist/gauge.css" rel="stylesheet">
+
     <title>Gauge demo</title>
 </head>
 <body>
@@ -13,10 +15,24 @@
 <script>
 
     var target = document.getElementById('gauge-demo');
+
     var gauge = new Gauge.Gauge();
-    gauge.Init({
-        targetElement: target
-    });
+
+    /**
+     * Possible adjustment listed below
+     */
+//    gauge.Value = 75;
+//    gauge.LabelsOutside = false;
+//    gauge.CanvasSize = new Gauge.Size(500, 500);
+//    gauge.Labels = ['Cat', 'Dog', 'Bird', 'Bee', 'Fish'];
+    /*gauge.Sectors = [
+        new Gauge.Sector(25, 'blue'),
+        new Gauge.Sector(25, 'yellow'),
+        new Gauge.Sector(25),
+        new Gauge.Sector(25, 'purple')
+    ];*/
+
+    gauge.Init(target);
 
 </script>
 </body>

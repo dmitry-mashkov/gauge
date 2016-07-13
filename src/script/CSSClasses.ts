@@ -1,9 +1,10 @@
 module Gauge
 {
     export var CSSClasses = {
-        Gauge: 'gauge',
-        ReadOnly: 'readonly',
-        Canvas: 'canvas',
-        Pointer: 'pointer'
+        Gauge: 'g-gauge',
+        Canvas: 'g-canvas',
+        Pointer: 'g-pointer',
+        Sector: 'g-sector',
+        Label: 'g-label'
     }
 }
