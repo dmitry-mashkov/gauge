@@ -1,0 +1,26 @@
+{
+  "name": "svg-gauge",
+  "version": "1.0.0",
+  "homepage": "https://github.com/dmitry-mashkov/gauge",
+  "authors": [
+    "dmitry-mashkov <dmitry-mashkov@bitbucket.org>"
+  ],
+  "description": "Gauge component",
+  "main": "dist/gauge.js",
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "Gauge",
+    "SVG",
+    "TypeScript"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
