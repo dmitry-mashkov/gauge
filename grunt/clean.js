@@ -3,8 +3,7 @@ module.exports = {
         files: [{
             dot: true,
             src: [
-                '<%= yeoman.dist %>/{,*/}*',
-                '!<%= yeoman.dist %>/.git{,*/}*'
+                'dist/{,*/}*'
             ]
         }]
     }
