@@ -1,4 +1,13 @@
 module.exports = {
+    ts: {
+        options: {
+            livereload: true
+        },
+        ts: {
+            files: ['src/script/*.ts'],
+            tasks: ['ts']
+        }
+    },
     js: {
         files: [
             '<%= yeoman.app %>/js/{,*}*.js'

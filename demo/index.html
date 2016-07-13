@@ -6,7 +6,18 @@
 </head>
 <body>
 
-Hello, Gauge
+<div id="gauge-demo"></div>
 
+<script src="../dist/gauge.js"></script>
+
+<script>
+
+    var target = document.getElementById('gauge-demo');
+    var gauge = new Gauge.Gauge();
+    gauge.Init({
+        targetElement: target
+    });
+
+</script>
 </body>
 </html>
