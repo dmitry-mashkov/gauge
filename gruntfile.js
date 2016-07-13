@@ -15,7 +15,8 @@ module.exports = function(grunt) {
     grunt.registerTask('build', [
         'clean:dist',
         'ts',
-        'uglify'
+        'uglify',
+        'cssmin'
     ]);
 
     grunt.registerTask('default', [
